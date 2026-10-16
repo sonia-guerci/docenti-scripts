@@ -47,7 +47,7 @@ Puoi scegliere tra **3 modalità** in base ai permessi del tuo browser e al comp
 
 | Script | Descrizione | Pagina Target | Tampermonkey | Bookmarklet / Snippet |
 | :--- | :--- | :--- | :---: | :---: |
-| **Copia Studenti Excel** | Aggiunge un pulsante nell'intestazione del registro per copiare l'elenco della classe in Capital Case (`Nome Cognome`) pronto per essere incollato su Excel. | Registro di Classe (`regclasse.php`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/copia-studenti-excel.user.js) |
+| **Copia Studenti Excel** | Aggiunge un pulsante nell'intestazione del registro per copiare l'elenco della classe in Capital Case (`Nome Cognome`) pronto per essere incollato su Excel. | Registro di Classe (`web.spaggiari.eu/cvv/app/default/regclasse.php`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/copia-studenti-excel.user.js) |
 
 ---
 
