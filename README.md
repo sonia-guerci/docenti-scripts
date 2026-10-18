@@ -45,10 +45,15 @@ Puoi scegliere tra **3 modalità** in base ai permessi del tuo browser e al comp
 
 ### 📊 2. Spaggiari / ClasseViva (`/classeviva`)
 
+
 | Script | Descrizione | Pagina Target | Tampermonkey | Bookmarklet / Snippet |
 | :--- | :--- | :--- | :---: | :---: |
-| **Copia Studenti Excel** | Aggiunge un pulsante nell'intestazione del registro per copiare l'elenco della classe in Capital Case (`Cognome Nome`) pronto per essere incollato su Excel. | **Registro di Classe** (`web.spaggiari.eu/cvv/app/default/regclasse.php`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/copia-studenti-excel.user.js) |
-| **Estrazione Dati Lezioni** | Aggiunge un pannello per esportare tutte le lezioni di tutte le classi. La materia viene scelta da un elenco creato in automatico. Viene generato un report `.csv` compatibile con Excel con data, ora di inizio, durata, tipo di attività e argomento. | **Le mie classi** (`*.spaggiari.eu/cvv/app/default/gioprof_selezione.php`) e **Tutte le classi** (`*.spaggiari.eu/cvv/app/default/selezione_classi.php`)<br><br>✅ **Funziona anche sugli anni scolastici precedenti** (`web25`, `web24`, ecc.) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/estrazione-lezioni.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/estrazione-lezioni.user.js) |
+| **Copia Studenti Excel** | Aggiunge un pulsante nell'intestazione del registro per copiare l'elenco della classe in Capital Case (`Cognome Nome`) pronto per essere incollato su Excel. | **Registro di Classe** (`*.spaggiari.eu/cvv/app/default/regclasse.php`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/copia-studenti-excel.user.js) |
+| **Estrazione Dati Lezioni** | Aggiunge un pannello per esportare tutte le lezioni di tutte le classi. La materia viene scelta da un elenco creato in automatico. Viene generato un report `.csv` compatibile con Excel con data, ora di inizio, durata, tipo di attività e argomento. | **Le mie classi** (`*.spaggiari.eu/cvv/app/default/gioprof_selezione.php`) <br> **Tutte le classi** (`*.spaggiari.eu/cvv/app/default/selezione_classi.php`)| [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/estrazione-lezioni.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/estrazione-lezioni.user.js) |
+| **Privacy Mode** | Oscura voti, note e avvisi per la proiezione in classe con un click e memorizza lo stato (`ON/OFF`) durante la navigazione. | **Registro di Classe** (`*.spaggiari.eu/cvv/app/default/regclasse.php`) <br> **Valutazioni** <br> (`*.spaggiari.eu/cvv/app/default/regvoti.php`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/privacy-mode.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classeviva/privacy-mode.user.js) |
+
+
+*(Nota: Funzionano anche sugli anni scolastici precedenti (`web25`, `web24`, ecc.)*
 
 ---
 
