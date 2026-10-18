@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ClasseViva - Privacy mode
 // @namespace    https://github.com/sonia-guerci/docenti-scripts
-// @version      1.0.0
+// @version      1.1.0
 // @description  Oscura voti, note e avvisi nel registro ClasseViva con memoria dello stato ON/OFF tra le pagine.
 // @author       Sonia Guerci
 // @match        https://*.spaggiari.eu/cvv/app/default/regvoti.php?*
@@ -14,103 +14,74 @@
 (function() {
     'use strict';
 
-    // Gestione della memoria dello stato
+    const CLASSE = 'cv-privacy-on';
+    const STORAGE_KEY = 'cv_privacy_active';
+
+    // L'oscuramento è solo CSS: nessuno stile inline sui singoli voti, quindi nessun cursore alterato
+    const style = document.createElement('style');
+    style.textContent = `
+        .${CLASSE} td[evento_codice].registro_voti_riga_studente p,
+        .${CLASSE} #nota_scorr_agenda:not([data-stato="visibile"]),
+        #nota_scorr_agenda[data-stato="nascosto"] {
+            -webkit-text-security: square;
+            filter: blur(3px);
+        }
+        #nota_scorr_agenda { cursor: zoom-out; }
+        .${CLASSE} #nota_scorr_agenda:not([data-stato="visibile"]),
+        #nota_scorr_agenda[data-stato="nascosto"] { cursor: zoom-in; }
+    `;
+    document.head.appendChild(style);
+
     function isPrivacyAttiva() {
-        const saved = localStorage.getItem('cv_privacy_active');
-        return saved === null ? true : saved === 'true';
+        return localStorage.getItem(STORAGE_KEY) !== 'false';
     }
 
     function setPrivacyAttiva(valore) {
-        localStorage.setItem('cv_privacy_active', valore);
+        localStorage.setItem(STORAGE_KEY, valore);
+        document.documentElement.classList.toggle(CLASSE, valore);
     }
 
-    // Funzione per alternare lo stato di oscuramento di un elemento
-    function toggleSecurity(el) {
-        if (!el) return;
-        const currentStyle = el.style.webkitTextSecurity;
-        if (currentStyle === '' || currentStyle !== 'square') {
-            el.style.webkitTextSecurity = 'square';
-            el.style.filter = 'blur(3px)';
-            el.style.cursor = 'zoom-in';
-        } else {
-            el.style.webkitTextSecurity = 'none';
-            el.style.filter = 'none';
-            el.style.cursor = 'zoom-out';
-        }
-    }
+    document.documentElement.classList.toggle(CLASSE, isPrivacyAttiva());
 
     // Oscura le note e gli avvisi presenti nel banner scorrevole
     function oscuraAvvisi() {
-        try {
-            let posAgenda = 0;
-            const notaScorr = document.querySelector("p#nota_classe_scorr>span");
-            if (notaScorr && !document.getElementById('nota_scorr_agenda')) {
-                const comunicazioni = document.querySelector("p#nota_classe_scorr>span>a");
-                if (comunicazioni) posAgenda++;
+        const notaScorr = document.querySelector('p#nota_classe_scorr>span');
+        if (!notaScorr || document.getElementById('nota_scorr_agenda')) return;
 
-                const text = notaScorr.textContent;
-                const parti = text.split("---\n");
-                if (text !== '' && parti.length > posAgenda) {
-                    notaScorr.innerHTML = '';
-                    if (comunicazioni) notaScorr.appendChild(comunicazioni);
+        const comunicazioni = notaScorr.querySelector(':scope>a');
+        const posAgenda = comunicazioni ? 1 : 0;
 
-                    const span = document.createElement('span');
-                    span.id = 'nota_scorr_agenda';
-                    span.className = 'bluetext';
+        const text = notaScorr.textContent;
+        const parti = text.split('---\n');
+        if (text === '' || parti.length <= posAgenda) return;
 
-                    const attivo = isPrivacyAttiva();
-                    span.style.cssText = attivo
-                        ? 'cursor: zoom-in; -webkit-text-security: square; filter: blur(3px);'
-                        : 'cursor: zoom-out; -webkit-text-security: none; filter: none;';
+        notaScorr.innerHTML = '';
+        if (comunicazioni) notaScorr.appendChild(comunicazioni);
 
-                    span.textContent = parti[posAgenda];
-                    span.onclick = function() { toggleSecurity(this); };
+        const span = document.createElement('span');
+        span.id = 'nota_scorr_agenda';
+        span.className = 'bluetext';
+        span.textContent = parti[posAgenda];
+        // Il click inverte lo stato corrente dell'avviso, in entrambe le modalità, senza toccare quello globale
+        span.addEventListener('click', () => {
+            const oscurato = getComputedStyle(span).filter !== 'none';
+            span.dataset.stato = oscurato ? 'visibile' : 'nascosto';
+        });
 
-                    notaScorr.parentNode.insertBefore(span, notaScorr.nextSibling);
-                }
-            }
-        } catch (e) {
-            console.error('Errore durante l\'oscuramento degli avvisi:', e);
-        }
+        notaScorr.parentNode.insertBefore(span, notaScorr.nextSibling);
     }
 
-    // Oscura i voti della griglia di valutazione
-    function oscuraVoti() {
-        try {
-            const attivo = isPrivacyAttiva();
-            const voti = document.querySelectorAll('td[evento_codice].registro_voti_riga_studente p');
-            voti.forEach(voto => {
-                if (!voto.dataset.privacyInit) {
-                    voto.dataset.privacyInit = "true";
-                    if (attivo) {
-                        toggleSecurity(voto);
-                    } else {
-                        voto.style.webkitTextSecurity = 'none';
-                        voto.style.filter = 'none';
-                        voto.style.cursor = 'zoom-out';
-                    }
-                    //voto.onclick = function() { toggleSecurity(this); };
-                }
-            });
-        } catch (e) {
-            console.error('Errore durante l\'oscuramento dei voti:', e);
-        }
-    }
-
-    // Inserisce un pulsante nell'intestazione per mostrare/nascondere tutti i dati in un click
+    // Pulsante per mostrare/nascondere tutti i dati
     function aggiungiPulsantePrivacy() {
+        if (document.getElementById('btn-privacy-toggle')) return;
         const targetTd = document.querySelector('thead tr:last-child > td:first-child') || document.querySelector('thead tr:nth-last-child(2) > th:first-child');
-        if (!targetTd || document.getElementById('btn-privacy-toggle')) return;
+        if (!targetTd) return;
 
         const btn = document.createElement('button');
         btn.id = 'btn-privacy-toggle';
         btn.type = 'button';
-
-        let attivo = isPrivacyAttiva();
-        btn.innerHTML = attivo ? '🔒 Privacy ON' : '👁️ Privacy OFF';
         btn.style.cssText = `
             padding: 5px 12px;
-            background-color: ${attivo ? '#6c757d' : '#dc3545'};
             color: #fff;
             border: none;
             border-radius: 4px;
@@ -121,42 +92,39 @@
             transition: background-color 0.2s;
         `;
 
-        btn.onclick = () => {
-            attivo = !attivo;
-            setPrivacyAttiva(attivo);
-
-            const elementi = document.querySelectorAll('td[evento_codice].registro_voti_riga_studente p, #nota_scorr_agenda');
-            elementi.forEach(el => {
-                if (attivo) {
-                    el.style.webkitTextSecurity = 'square';
-                    el.style.filter = 'blur(3px)';
-                    el.style.cursor = 'zoom-in';
-                } else {
-                    el.style.webkitTextSecurity = 'none';
-                    el.style.filter = 'none';
-                    el.style.cursor = 'zoom-out';
-                }
-            });
-            btn.innerHTML = attivo ? '🔒 Privacy ON' : '👁️ Privacy OFF';
+        const aggiorna = attivo => {
+            btn.textContent = attivo ? '🔒 Privacy ON' : '👁️ Privacy OFF';
             btn.style.backgroundColor = attivo ? '#6c757d' : '#dc3545';
         };
+        aggiorna(isPrivacyAttiva());
+
+        btn.addEventListener('click', () => {
+            const attivo = !isPrivacyAttiva();
+            setPrivacyAttiva(attivo);
+            aggiorna(attivo);
+            // Azzera eventuali rivelazioni manuali dell'avviso
+            const agenda = document.getElementById('nota_scorr_agenda');
+            if (agenda) delete agenda.dataset.stato;
+        });
 
         targetTd.appendChild(btn);
     }
 
-    // Esecuzione iniziale
     function applicaPrivacy() {
         oscuraAvvisi();
-        oscuraVoti();
         aggiungiPulsantePrivacy();
     }
 
-    window.addEventListener('load', applicaPrivacy);
+    // Debounce: una sola esecuzione per frame anche con molte mutazioni
+    let pianificato = false;
+    new MutationObserver(() => {
+        if (pianificato) return;
+        pianificato = true;
+        requestAnimationFrame(() => {
+            pianificato = false;
+            applicaPrivacy();
+        });
+    }).observe(document.body, { childList: true, subtree: true });
 
-    // Osserva eventuali aggiornamenti dinamici della pagina
-    const observer = new MutationObserver(() => {
-        applicaPrivacy();
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
+    applicaPrivacy();
 })();
