@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  Aggiunge un pulsante nel registro di classe per copiare i nomi in Capital Case pronti per Excel
 // @author       Sonia Guerci
-// @match        https://web.spaggiari.eu/cvv/app/default/regclasse.php*
+// @match        https://*.spaggiari.eu/cvv/app/default/regclasse.php*
 // @updateURL    https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js
 // @downloadURL  https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classeviva/copia-studenti-excel.user.js
 // @grant        none
