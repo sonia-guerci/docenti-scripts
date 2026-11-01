@@ -1,9 +1,19 @@
 # 📜 Script & Utility Web per Docenti
 
 ![License](https://img.shields.io/badge/license-MIT-purple.svg)
-![Type](https://img.shields.io/badge/Tipo-UserScripts%20%26%20Bookmarklets-blue.svg)
+![Type](https://img.shields.io/badge/Tipo-UserScripts_%26_Web_Apps-blue.svg)
 
-Una raccolta di script gratuiti e Open Source per velocizzare le operazioni quotidiane sulle piattaforme scolastiche e sui registri elettronici (**ClasseViva**, **Unica**, **Google Classroom**, ecc.).
+Una raccolta di script gratuiti, web app e strumenti Open Source per velocizzare le operazioni quotidiane sui registri elettronici (**ClasseViva**, **Unica**, **Google Classroom**, ecc.) e supportare le attività didattiche.
+
+---
+
+## 🎨 Web App & Strumenti Didattici (`/didattica`)
+
+Strumenti e simulazioni interattive eseguibili direttamente online da qualsiasi dispositivo e browser, senza alcuna installazione.
+
+| Strumento | Descrizione | Live Demo | Codice Sorgente |
+| :--- | :--- | :---: | :---: |
+| **Editor BMP 24-bit & RGB** | Editor esadecimale interattivo per spiegare visivamente agli studenti la struttura binaria delle immagini BMP a 24-bit (header, canali RGB/BGR, allineamento riga e byte di padding). | [🚀 Apri Web App](https://sonia-guerci.github.io/docenti-scripts/didattica/bmp-editor/) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/tree/main/didattica/bmp-editor) |
 
 ---
 
