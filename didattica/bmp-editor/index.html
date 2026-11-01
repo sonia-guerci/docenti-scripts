@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Didattica BMP: Editor Esadecimale Universale</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            gap: 15px;
+        }
+
+        #top-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: #252526;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #3e3e42;
+        }
+
+        input[type="file"] {
+            color: #fff;
+        }
+
+        #btn-save {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #btn-save:hover {
+            background-color: #388e3c;
+        }
+
+        #btn-save:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .panel {
+            background: #252526;
+            border: 2px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #left-panel {
+            flex: 1;
+            justify-content: center;
+        }
+
+        #right-panel {
+            flex: 2;
+            min-width: 0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #f70;
+            border-bottom: 2px solid #3e3e42;
+            width: 100%;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        #bmp-image {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            width: 320px;
+            height: 320px;
+            border: 4px solid #f70;
+            background-color: #111;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+        }
+
+        .hex-grid {
+            display: grid;
+            gap: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            width: 100%;
+            overflow-y: auto;
+            padding: 10px;
+            background: #111;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .hex-byte {
+            position: relative; /* Aggiunto per il posizionamento delle lettere */
+            background: #2d2d2d;
+            border: 1px solid #3e3e42;
+            color: #64b5f6;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 2px;
+        }
+
+        .hex-byte[contenteditable="true"]:focus {
+            background: #f70;
+            color: #000;
+            outline: none;
+            border-color: #fff;
+        }
+
+        /* Classi speciali per i raggruppamenti visuali */
+        .is-header-section {
+            grid-column: span 16;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .is-pixel-row {
+            display: contents;
+            /* Permette ai figli di usare la griglia principale della riga */
+        }
+
+        .is-pixel {
+            color: #a5d6a7;
+            border-color: #2e7d32;
+            cursor: text;
+        }
+
+        /* Alternanza di sfondo leggera per separare visivamente un pixel (3 byte) dal successivo */
+        .pixel-even {
+            background: #223e24;
+        }
+
+        .pixel-odd {
+            background: #2d5a30;
+        }
+
+        /* Stile per le etichette B, G, R nelle celle dei pixel */
+        .is-pixel::after {
+            content: attr(data-channel);
+            position: absolute;
+            bottom: 1px;
+            right: 2px;
+            font-size: 8px;
+            pointer-events: none; /* Impedisce alla lettera di bloccare il click */
+            font-family: sans-serif;
+            font-weight: normal;
+        }
+
+        .is-pixel[data-channel="B"]::after { color: #64b5f6; } /* Blu */
+        .is-pixel[data-channel="G"]::after { color: #81c784; } /* Verde */
+        .is-pixel[data-channel="R"]::after { color: #e57373; } /* Rosso */
+
+        /* Stile dedicato ai byte di padding a fine riga */
+        .is-padding {
+            background: #3a3a3a;
+            color: #888;
+            border-color: #555;
+        }
+
+        .info-box {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top-bar" style="justify-content: space-between;">
+
+        <!-- SEZIONE SINISTRA: Input -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <strong>Template:</strong>
+            <button id="btn-2x2">2x2</button>
+            <button id="btn-4x4">4x4</button>
+            <button id="btn-8x8">8x8</button>
+
+            <strong style="margin-left: 15px;">1. Apri:</strong>
+            <input type="file" id="file-input" accept=".bmp">
+        </div>
+
+        <!-- SEZIONE CENTRALE: Visualizzazione -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <strong>Base:</strong>
+            <label><input type="radio" name="base-selettore" value="16" checked> Esadecimale (FF)</label>
+            <label><input type="radio" name="base-selettore" value="10"> Decimale (255)</label>
+        </div>
+
+        <!-- SEZIONE DESTRA: Output -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <strong>2. Esporta modifiche:</strong>
+            <button id="btn-save" disabled>Salva File BMP</button>
+        </div>
+
+    </div>
+
+    <div class="container">
+        <div class="panel" id="left-panel">
+            <h2>Anteprima Immagine</h2>
+            <div style="position: relative; display: inline-block; line-height: 0;">
+                <img id="bmp-image" src="" alt="Seleziona un file per iniziare" style="display:none;">
+                <div id="pixel-overlay"
+                    style="display: none; position: absolute; border: 2px solid #00ff00; pointer-events: none; z-index: 10; box-shadow: 0 0 4px #000, inset 0 0 4px #000; box-sizing: border-box;">
+                </div>
+            </div>
+            <div id="no-file-text" style="color: #aaa;">Nessun file caricato</div>
+            <div class="info-box" id="file-details"></div>
+        </div>
+
+        <div class="panel" id="right-panel">
+            <h2>Editor Esadecimale (Allineato alla Struttura)</h2>
+            <div class="hex-grid" id="hex-editor"></div>
+            <div class="info-box" id="instructions">
+                Carica un file BMP a 24-bit per visualizzare ed editarne la struttura binaria.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bmpBytes = [];
+        let pixelStartOffset = 54;
+        let originalFileName = "immagine_modificata.bmp";
+        let currentLarghezza = 0;
+        let currentAltezza = 0;
+        let currentBase = 16; // Di default esadecimale
+
+        const fileInput = document.getElementById('file-input');
+        const btnSave = document.getElementById('btn-save');
+        const editor = document.getElementById('hex-editor');
+        const imgElement = document.getElementById('bmp-image');
+        const noFileText = document.getElementById('no-file-text');
+        const fileDetails = document.getElementById('file-details');
+        const instructions = document.getElementById('instructions');
+
+        document.querySelectorAll('input[name="base-selettore"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentBase = parseInt(e.target.value);
+                if (bmpBytes.length > 0) {
+                    buildEditor(currentLarghezza, currentAltezza); // Ridisegna con la nuova base
+                }
+            });
+        });
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            originalFileName = file.name.replace(".bmp", "_modificata.bmp");
+
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                const buffer = evt.target.result;
+                bmpBytes = Array.from(new Uint8Array(buffer));
+
+                if (bmpBytes[0] === 0x42 && bmpBytes[1] === 0x4D) {
+                    // CONTROLLO: Leggi i bit per pixel (byte 28 e 29)
+                    const bpp = bmpBytes[28] | (bmpBytes[29] << 8);
+
+                    if (bpp !== 24) {
+                        alert(`Errore: hai caricato un'immagine a ${bpp}-bit. Questo strumento supporta solo file BMP a 24-bit non compressi.`);
+                        document.getElementById('file-input').value = ""; // Resetta l'input
+                        btnSave.disabled = true;
+                        return; // Interrompe l'esecuzione
+                    }
+                    // CONTROLLO: Verifica che l'immagine non sia compressa (offset 30)
+                    const compression = bmpBytes[30] | (bmpBytes[31] << 8) | (bmpBytes[32] << 16) | (bmpBytes[33] << 24);
+                    if (compression !== 0) {
+                        alert("Errore: l'immagine utilizza una compressione. Questo strumento richiede file BMP non compressi (BI_RGB).");
+                        document.getElementById('file-input').value = "";
+                        btnSave.disabled = true;
+                        return;
+                    }
+                    pixelStartOffset = bmpBytes[10] | (bmpBytes[11] << 8) | (bmpBytes[12] << 16) | (bmpBytes[13] << 24);
+
+                    // Sostituisci i const larghezza e altezza con:
+                    currentLarghezza = bmpBytes[18] | (bmpBytes[19] << 8) | (bmpBytes[20] << 16) | (bmpBytes[21] << 24);
+                    currentAltezza = bmpBytes[22] | (bmpBytes[23] << 8) | (bmpBytes[24] << 16) | (bmpBytes[25] << 24);
+
+                    noFileText.style.display = 'none';
+                    imgElement.style.display = 'block';
+                    btnSave.disabled = false;
+
+                    fileDetails.innerHTML = `<strong>Risoluzione:</strong> ${currentLarghezza}x${currentAltezza} pixel<br><strong>Offset pixel:</strong> byte ${pixelStartOffset}`;
+                    instructions.innerHTML = `L'header (bloccato) è raggruppato in alto su righe da 16. Sotto, <strong>ogni riga corrisponde esattamente a una riga dell'immagine</strong>. I blocchi verdi alternati separano i singoli pixel (B, G, R). I byte grigi sono il padding.`;
+
+
+                    buildEditor(currentLarghezza, currentAltezza);
+
+                    renderBmp();
+                } else {
+                    alert("Il file selezionato non è un'immagine BMP valida.");
+                    btnSave.disabled = true;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function renderBmp() {
+            if (bmpBytes.length === 0) return;
+            const byteArray = new Uint8Array(bmpBytes);
+            const blob = new Blob([byteArray], { type: 'image/bmp' });
+            imgElement.src = URL.createObjectURL(blob);
+        }
+
+        btnSave.addEventListener('click', function () {
+            if (bmpBytes.length === 0) return;
+            const byteArray = new Uint8Array(bmpBytes);
+            const blob = new Blob([byteArray], { type: 'image/bmp' });
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = originalFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        function buildEditor(larghezza, altezza) {
+            editor.innerHTML = '';
+
+            // Calcola la dimensione totale di una riga in byte (dati + padding)
+            const rowSizeWithoutPadding = larghezza * 3;
+            const rowSizeWithPadding = Math.ceil(rowSizeWithoutPadding / 4) * 4;
+            const paddingBytesCount = rowSizeWithPadding - rowSizeWithoutPadding;
+
+            // Configura la griglia esadecimale principale basandosi sulla larghezza reale dei dati + padding
+            editor.style.gridTemplateColumns = `repeat(${rowSizeWithPadding}, 1fr)`;
+
+            // --- 1. RAGGRUPPAMENTO DELL'HEADER (Righe fisse da 16 elementi per non sprecare spazio) ---
+            const headerWrapper = document.createElement('div');
+            headerWrapper.className = 'is-header-section';
+            headerWrapper.style.gridColumn = `span ${rowSizeWithPadding}`;
+            editor.appendChild(headerWrapper);
+
+            for (let index = 0; index < pixelStartOffset; index++) {
+                const cell = document.createElement('div');
+                cell.className = 'hex-byte';
+                cell.contentEditable = false;
+                cell.textContent = bmpBytes[index].toString(16).padStart(2, '0').toUpperCase();
+                headerWrapper.appendChild(cell);
+            }
+            // --- 2. RAGGRUPPAMENTO DINAMICO DEI PIXEL (Riga per riga dell'immagine) ---
+            // Nota: Le righe in memoria nella BMP sono salvate dal basso verso l'alto (sottosopra)
+            // Mostriamo l'editor partendo dall'ultima riga di memoria fino alla prima per far combaciare
+            // la riga in alto dell'anteprima visiva con la prima riga modificabile dell'editor.
+            for (let r = 0; r < altezza; r++) {
+                const rigaRealeBmp = (altezza - 1) - r;
+                const rigaOffsetInizio = pixelStartOffset + (rigaRealeBmp * rowSizeWithPadding);
+                for (let c = 0; c < rowSizeWithPadding; c++) {
+                    const index = rigaOffsetInizio + c;
+                    if (index >= bmpBytes.length) break;
+                    const cell = document.createElement('div');
+                    cell.className = 'hex-byte';
+                    // Verifica se il byte corrente è un pixel o un byte di padding
+                    if (c < rowSizeWithoutPadding) {
+                        cell.contentEditable = true;
+                        cell.classList.add('is-pixel');
+
+                        // Assegna il canale B, G o R in base alla posizione
+                        const channel = (c % 3 === 0) ? 'B' : (c % 3 === 1) ? 'G' : 'R';
+                        cell.setAttribute('data-channel', channel);
+                        
+                        const pixelID = Math.floor(c / 3);
+                        cell.classList.add(pixelID % 2 === 0 ? 'pixel-even' : 'pixel-odd');
+
+                        // Ricava le coordinate visive del pixel corrente
+                        // r = riga dall'alto in basso (0 è in cima); pixelID = colonna X
+                        const visPixelX = Math.floor(c / 3);
+                        const visPixelY = r;
+
+                        cell.addEventListener('focus', () => {
+                            setTimeout(() => {
+                                const range = document.createRange();
+                                range.selectNodeContents(cell);
+                                const sel = window.getSelection();
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }, 0);
+
+                            // Mostra il bordo sull'immagine
+                            mostraEvidenziatore(visPixelX, visPixelY);
+                        });
+
+                        cell.addEventListener('beforeinput', (e) => {
+                            if (!e.data) return;
+                            // Regex e lunghezza massima cambiano in base alla selezione
+                            const regex = currentBase === 16 ? /^[0-9a-fA-F]$/ : /^[0-9]$/;
+                            const maxLength = currentBase === 16 ? 2 : 3;
+
+                            if (!regex.test(e.data)) { e.preventDefault(); return; }
+                            if (window.getSelection().toString().length === cell.textContent.length) return;
+                            if (cell.textContent.length >= maxLength) e.preventDefault();
+                        });
+                    } else {
+                        cell.contentEditable = false;
+                        cell.classList.add('is-padding');
+                    }
+
+                    // Mostra il testo nel formato scelto (l'esadecimale richiede lo 0 iniziale)
+                    cell.textContent = currentBase === 16
+                        ? bmpBytes[index].toString(16).padStart(2, '0').toUpperCase()
+                        : bmpBytes[index].toString(10);
+
+                    cell.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); cell.blur(); }
+                    });
+
+                    cell.addEventListener('blur', () => {
+                        // Nascondi il bordo sull'immagine
+                        document.getElementById('pixel-overlay').style.display = 'none';
+
+                        let val = cell.textContent.trim();
+                        let parsed = parseInt(val, currentBase);
+                        const maxLength = currentBase === 16 ? 2 : 3;
+
+                        if (!isNaN(parsed) && parsed >= 0 && parsed <= 255 && val.length <= maxLength && val.length > 0) {
+                            bmpBytes[index] = parsed;
+                        }
+
+                        cell.textContent = currentBase === 16
+                            ? bmpBytes[index].toString(16).padStart(2, '0').toUpperCase()
+                            : bmpBytes[index].toString(10);
+                        renderBmp();
+                    });
+                    editor.appendChild(cell);
+                }
+            }
+        }
+
+        function mostraEvidenziatore(pixelX, pixelY) {
+            const img = document.getElementById('bmp-image');
+            const overlay = document.getElementById('pixel-overlay');
+            if (img.style.display === 'none') return;
+
+            const displayWidth = img.clientWidth;   // 320px 
+            const displayHeight = img.clientHeight; // 320px
+            const borderSize = 4; // Spessore del bordo CSS (#f70)
+
+            // Trova la dimensione reale dell'immagine scalata dal "contain"
+            const scale = Math.min(displayWidth / currentLarghezza, displayHeight / currentAltezza);
+            const actualWidth = currentLarghezza * scale;
+            const actualHeight = currentAltezza * scale;
+
+            // Trova l'inizio dell'immagine (spazio vuoto)
+            const xOffset = (displayWidth - actualWidth) / 2;
+            const yOffset = (displayHeight - actualHeight) / 2;
+
+            // Sposta e ridimensiona l'overlay
+            overlay.style.width = `${Math.max(scale, 4)}px`;
+            overlay.style.height = `${Math.max(scale, 4)}px`;
+            overlay.style.left = `${borderSize + xOffset + (pixelX * scale)}px`;
+            overlay.style.top = `${borderSize + yOffset + (pixelY * scale)}px`;
+            overlay.style.display = 'block';
+        }
+
+        function caricaDaBase64(base64, nomeFile) {
+            const binaryString = window.atob(base64);
+            bmpBytes = Array.from(new Uint8Array(binaryString.length)).map((_, i) => binaryString.charCodeAt(i));
+
+            originalFileName = nomeFile + "_modificata.bmp";
+            pixelStartOffset = bmpBytes[10] | (bmpBytes[11] << 8) | (bmpBytes[12] << 16) | (bmpBytes[13] << 24);
+            currentLarghezza = bmpBytes[18] | (bmpBytes[19] << 8) | (bmpBytes[20] << 16) | (bmpBytes[21] << 24);
+            currentAltezza = bmpBytes[22] | (bmpBytes[23] << 8) | (bmpBytes[24] << 16) | (bmpBytes[25] << 24);
+
+            document.getElementById('no-file-text').style.display = 'none';
+            document.getElementById('bmp-image').style.display = 'block';
+            document.getElementById('btn-save').disabled = false;
+
+            // AGGIORNA I DETTAGLI E LE ISTRUZIONI QUI:
+            document.getElementById('file-details').innerHTML = `<strong>Risoluzione:</strong> ${currentLarghezza}x${currentAltezza} pixel<br><strong>Offset pixel:</strong> byte ${pixelStartOffset}`;
+            document.getElementById('instructions').innerHTML = `L'header (bloccato) è raggruppato in alto su righe da 16. Sotto, <strong>ogni riga corrisponde esattamente a una riga dell'immagine</strong>. I blocchi verdi alternati separano i singoli pixel (B, G, R). I byte grigi sono il padding.`;
+
+            buildEditor(currentLarghezza, currentAltezza);
+            renderBmp();
+        }
+
+        document.getElementById('btn-2x2').addEventListener('click', () => {
+            const base64_2x2 = "Qk1GAAAAAAAAADYAAAAoAAAAAgAAAAIAAAABABgAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAAAAAAD///////8AAA==";
+            caricaDaBase64(base64_2x2, "2x2");
+        });
+        // Ripeti per btn-4x4 e btn-8x8
+        document.getElementById('btn-4x4').addEventListener('click', () => {
+            const base64_4x4 = "Qk1mAAAAAAAAADYAAAAoAAAABAAAAAQAAAABABgAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////AAAAAAAAAAAAAAAA////////////////";
+            caricaDaBase64(base64_4x4, "4x4");
+        });
+        document.getElementById('btn-8x8').addEventListener('click', () => {
+            const base64_8x8 = "Qk32AAAAAAAAADYAAAAoAAAACAAAAAgAAAABABgAAAAAAAAAAADEDgAAxA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////////////";
+            caricaDaBase64(base64_8x8, "8x8");
+        });
+
+    </script>
+</body>
+
+</html>
