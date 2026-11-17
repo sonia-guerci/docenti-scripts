@@ -66,12 +66,13 @@ Puoi scegliere tra **3 modalità** in base ai permessi del tuo browser e al comp
 *(Nota: Funzionano anche sugli anni scolastici precedenti (`web25`, `web24`, ecc.)*
 
 ---
-
 ### 🏫 3. Google Classroom (`/classroom`)
 
-| Script | Descrizione | Pagina Target | Installazione |
-| :--- | :--- | :--- | :---: |
-| *[In arrivo]* | *Prossime utility in sviluppo...* | `classroom.google.com` | - |
+| Script | Descrizione | Pagina Target | Tampermonkey | Bookmarklet / Snippet |
+| :--- | :--- | :--- | :---: | :---: |
+| **Stampa Compito / Scarica Allegati** | Aggiunge il download diretto con 1 click sugli allegati (Stream, Compiti, Materiali) e una vista pulita per stampare compiti e post dello Stream. | **Stream del corso** (`https://classroom.google.com/u/*/c/*`) <br> **Dettaglio compito/materiale** (`https://classroom.google.com/u/*/c/*/*/details`) | [⚡ Installa Script](https://raw.githubusercontent.com/sonia-guerci/docenti-scripts/main/classroom/stampa-compito-allegati.user.js) | [📜 Codice Sorgente](https://github.com/sonia-guerci/docenti-scripts/blob/main/classroom/stampa-compito-allegati.user.js) |
+
+*(Nota: Nello **Stream** i pulsanti di stampa e download rapido compaiono solo se nelle **Impostazioni del corso ⚙️ -> Lavori del corso nello stream** è attiva la vista estesa **"Mostra allegati e dettagli"**. Nei corsi impostati su **"Mostra notifiche ridotte"**, lo script si attiva entrando nella scheda di dettaglio del singolo compito, materiale o post).*
 
 ---
 
