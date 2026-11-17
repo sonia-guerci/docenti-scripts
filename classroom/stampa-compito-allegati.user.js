@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Google Classroom - Stampa Compito e Download Allegati
 // @namespace    https://github.com/sonia-guerci/docenti-scripts
-// @version      1.8.3
+// @version      1.8.4
 // @description  Aggiunge il download diretto con 1 click sugli allegati (Stream, Compiti, Materiali) e una vista pulita per stampare compiti e post dello Stream
 // @author       Sonia Guerci
 // @match        https://classroom.google.com/*
@@ -789,7 +789,7 @@
 
             const tag = node.tagName.toUpperCase();
 
-            // Esclude gli elementi di interfaccia, la navigazione e le card allegato
+            // Esclude gli elementi di interfaccia, la navigazione, i contatori submissions e le card allegato
             if (
                 tag === 'BUTTON' ||
                 tag === 'SVG' ||
@@ -801,6 +801,8 @@
                 tag === 'NAV' ||
                 tag === 'ASIDE' ||
                 tag === 'FOOTER' ||
+                (tag === 'A' &&
+                    /\/submissions(\/|$|\?)/i.test(node.getAttribute('href') || node.href || '')) ||
                 (options.skipH1 && (tag === 'H1' || tag === 'H2')) ||
                 (options.excludeStreamItems &&
                     (node.hasAttribute('data-stream-item-id') ||
