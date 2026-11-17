@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Google Classroom - Stampa Compito e Download Allegati
 // @namespace    https://github.com/sonia-guerci/docenti-scripts
-// @version      1.8.1
+// @version      1.8.3
 // @description  Aggiunge il download diretto con 1 click sugli allegati (Stream, Compiti, Materiali) e una vista pulita per stampare compiti e post dello Stream
 // @author       Sonia Guerci
 // @match        https://classroom.google.com/*
@@ -22,6 +22,9 @@
     function isElementVisible(el) {
         if (!el || !el.isConnected) return false;
         if (el.closest('[aria-hidden="true"], [hidden], [inert]')) return false;
+        if (el.tagName === 'BR' || el.tagName === 'WBR') {
+            return el.parentElement ? isElementVisible(el.parentElement) : false;
+        }
         const rect = el.getBoundingClientRect();
         if (rect.width < 1 || rect.height < 1) return false;
         if (rect.right <= 0 || rect.left >= window.innerWidth) return false;
@@ -834,7 +837,10 @@
             }
 
             const blockText = (node.innerText || '').trim();
-            if (blockText && (isNoiseText(blockText) || (options.skipTexts && options.skipTexts.has(blockText)))) {
+            if (
+                blockText &&
+                (isNoiseText(blockText) || (options.skipTexts && options.skipTexts.has(blockText)))
+            ) {
                 return;
             }
 
@@ -847,12 +853,42 @@
                 return;
             }
 
+            const cs = getComputedStyle(node);
+            const rect = node.getBoundingClientRect();
+            const isBlockInSource = cs.display === 'block' || cs.display === 'list-item';
+            const preservesNewlines =
+                cs.whiteSpace === 'pre-wrap' ||
+                cs.whiteSpace === 'pre-line' ||
+                cs.whiteSpace === 'pre';
+
+            // Preserva le righe vuote del testo originale (paragrafi/span vuoti con altezza di riga)
+            if (
+                node.children.length === 0 &&
+                (node.textContent || '').trim() === '' &&
+                isBlockInSource &&
+                !node.hasAttribute('role') &&
+                rect.height >= 12 &&
+                rect.height <= 60 &&
+                rect.width >= 80
+            ) {
+                const blankDiv = targetDoc.createElement('div');
+                blankDiv.className = 'gc-blank-line';
+                targetParent.appendChild(blankDiv);
+                return;
+            }
+
             if (ALLOWED_TAGS.has(tag)) {
                 const newEl = targetDoc.createElement(tag.toLowerCase());
                 if (tag === 'A' && node.href && !node.href.startsWith('javascript:')) {
                     newEl.href = node.href;
                     newEl.target = '_blank';
                     newEl.rel = 'noopener noreferrer';
+                }
+                if (tag === 'SPAN' && isBlockInSource) {
+                    newEl.style.display = 'block';
+                }
+                if (preservesNewlines) {
+                    newEl.style.whiteSpace = cs.whiteSpace;
                 }
                 appendCleanNodes(node, newEl, targetDoc, options);
                 if (
@@ -863,6 +899,20 @@
                     tag === 'TH'
                 ) {
                     targetParent.appendChild(newEl);
+                }
+            } else if (
+                preservesNewlines ||
+                (isBlockInSource &&
+                    node.children.length === 0 &&
+                    (node.textContent || '').trim().length > 0)
+            ) {
+                const wrapperDiv = targetDoc.createElement('div');
+                if (preservesNewlines) {
+                    wrapperDiv.style.whiteSpace = cs.whiteSpace;
+                }
+                appendCleanNodes(node, wrapperDiv, targetDoc, options);
+                if (wrapperDiv.childNodes.length > 0) {
+                    targetParent.appendChild(wrapperDiv);
                 }
             } else {
                 appendCleanNodes(node, targetParent, targetDoc, options);
@@ -1297,7 +1347,9 @@
             }
             .instructions { font-size: 14px; margin-top: 10px; }
             .instructions * { max-width: 100% !important; position: static !important; }
-            .instructions div:empty, .instructions p:empty { display: none; }
+            .instructions .gc-blank-line { height: 0.85em; }
+            .instructions ul, .instructions ol { margin: 8px 0; padding-left: 24px; }
+            .instructions li { margin: 3px 0; }
             table {
                 width: 100%;
                 border-collapse: collapse;
